@@ -59,8 +59,3 @@ Built using **Next.js (Frontend)** and **Spring Boot (Backend)** in a scalable m
 
     CI/CD via GitHub Actions/Self Made Kubernetes environment using tools like jenkins
 
-🧑‍💻 Contributors
-
-    Shaurya Verma – Full-stack dev, maintainer
-    Ujjwal Wallia - Full-stack dev, mediater
-
