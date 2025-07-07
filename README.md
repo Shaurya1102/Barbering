@@ -28,6 +28,7 @@ Built using **Next.js (Frontend)** and **Spring Boot (Backend)** in a scalable m
 
 
 📁 Folder Structure (Detailed)
+    
     frontend/
 
         app/ – App routing (Next.js App Router)
@@ -57,5 +58,4 @@ Built using **Next.js (Frontend)** and **Spring Boot (Backend)** in a scalable m
     Dockerize for deployment
 
     CI/CD via GitHub Actions/Self Made Kubernetes environment using tools like jenkins
-
 
