@@ -28,6 +28,7 @@ Built using **Next.js (Frontend)** and **Spring Boot (Backend)** in a scalable m
 
 
 📁 Folder Structure (Detailed)
+    
     frontend/
 
         app/ – App routing (Next.js App Router)
@@ -61,5 +62,5 @@ Built using **Next.js (Frontend)** and **Spring Boot (Backend)** in a scalable m
 🧑‍💻 Contributors
 
     Shaurya Verma – Full-stack dev, maintainer
-    Ujjwal Walia - Full-stack dev, mediater
+    Ujjwal Wallia - Full-stack dev, mediater
 
