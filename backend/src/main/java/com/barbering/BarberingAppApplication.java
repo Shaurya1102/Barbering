@@ -1,4 +1,4 @@
-package com.barbering;
+package com.Barbering;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
