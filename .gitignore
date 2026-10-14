@@ -1,0 +1,49 @@
+# ============================================================
+# Barbering — root ignore (for pushing from this folder)
+# Kept: source code, .ai/ docs, AGENTS.md, README.md, configs.
+# Ignored: local toolchains, build output, caches, secrets, agent scrap.
+# ============================================================
+
+# AI & Agent local scrap files (Do not push)
+.aider*
+*.local.md
+.cursorrules.bak
+ai-notes.txt
+
+# CRITICAL: Never push these (especially if your app uses AI APIs)
+.env
+.env.local
+.env.development.local
+.env.*
+
+# Local toolchains & downloaded binaries (JDK, Maven, m2 repo, PG scratch)
+tools/
+.tools/
+
+# Session / agent scratch and diagnostics
+.dsh-handoff/
+.tmp*
+.npm-cache/
+
+# Build output & caches (backend + frontend)
+target/
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+
+# Runtime data (uploaded photos, logs)
+uploads/
+logs/
+*.log
+
+# IDE / OS junk
+.idea/
+.vscode/
+*.iml
+*.iws
+.DS_Store
+Thumbs.db
+desktop.ini

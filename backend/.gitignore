@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Runtime data & local artifacts (never push)
+uploads/
+logs/
+*.log
+hs_err_pid*
+replay_pid*

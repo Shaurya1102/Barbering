@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint app lib",
+    "typecheck": "tsc --noEmit"
   },
   "packageManager": "npm@10.9.2",
   "overrides": {
