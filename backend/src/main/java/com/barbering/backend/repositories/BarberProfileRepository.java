@@ -9,10 +9,14 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface BarberProfileRepository extends JpaRepository<BarberProfile, Long> {
     Optional<BarberProfile> findByUserId(Long userId);
+
+    @Query("select p from BarberProfile p where p.latitude is not null and p.longitude is not null")
+    List<BarberProfile> findAllWithCoordinates();
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from BarberProfile p where p.id = :id")

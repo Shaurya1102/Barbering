@@ -39,6 +39,19 @@ migration and this document together.
   use shared `services` catalog defaults. Appointment rows keep their existing
   service name, price, and duration snapshots after an offering is edited.
 
+## Google Places discovery and place claims — V5
+
+- `barber_profiles.latitude` and `barber_profiles.longitude` store barber
+  coordinates for distance calculation and nearby discovery.
+- `barber_profiles.google_place_id` (unique, nullable, VARCHAR(64)) links an
+  authenticated member profile to a claimed Google Maps place.
+- `place_claims`: records owner-attested claims on Google Maps listings. Columns
+  include `id`, `user_id` (FK users), `barber_profile_id` (FK barber_profiles),
+  `google_place_id` (unique VARCHAR(64)), `status` ('PENDING', 'APPROVED',
+  'REJECTED'), `requested_at` (timestamptz), and `reviewed_at` (timestamptz).
+  Only place IDs and claim lifecycle metadata are stored long-term; full Google
+  payloads remain external.
+
 ## Mapping alignment — V3
 
 V3 changes `working_hours.day_of_week`, `barber_breaks.day_of_week`, and

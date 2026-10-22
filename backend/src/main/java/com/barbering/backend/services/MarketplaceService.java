@@ -87,6 +87,12 @@ public class MarketplaceService {
         profile.setStreetAddress(clean(update.streetAddress()));
         profile.setPostalCode(clean(update.postalCode()));
         profile.setCountry(clean(update.country()));
+        if (update.latitude() != null && update.longitude() != null) {
+            if (Math.abs(update.latitude()) <= 90.0 && Math.abs(update.longitude()) <= 180.0) {
+                profile.setLatitude(update.latitude());
+                profile.setLongitude(update.longitude());
+            }
+        }
         profile.touch();
         profiles.save(profile);
         return toBarberDto(profile);

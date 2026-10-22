@@ -30,6 +30,16 @@ completed successfully.
 - `V3__align_integer_column_types.sql`: aligns three constrained small-number
   columns with their Java `int` mappings while preserving their data and
   constraints.
+- `V4__barber_service_details.sql`: adds per-offering `name_override` and
+  `description_override` columns to `barber_services`, keeping service edits
+  local to one barber's offering while the shared catalog stays a source of
+  defaults.
+- `V5__google_places_discovery.sql`: adds `latitude`, `longitude`, and unique
+  `google_place_id` to `barber_profiles`, and creates the `place_claims` table
+  (`user_id`, `barber_profile_id`, unique `google_place_id`, `status`
+  PENDING/APPROVED/REJECTED, `requested_at`, `reviewed_at`) with a profile
+  index. Only place IDs and claim metadata are stored; full Google payloads
+  stay external.
 
 The migration files are the exact source of truth. They define foreign keys,
 checks, unique constraints, and indexes. See `DATABASE_SCHEMA.md` for columns

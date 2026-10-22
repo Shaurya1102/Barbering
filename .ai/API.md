@@ -31,6 +31,7 @@ Password hashes and session identifiers are never returned.
 | `GET /barbers/{barberId}/reviews` | Public reviews for completed appointments. |
 | `GET /barbers/{barberId}/availability?serviceId={offeringId}&date=YYYY-MM-DD` | Available slots derived from the barber's local working hours, recurring breaks, enabled service duration, existing pending/confirmed appointments, and past-time rules. Times include offsets; the response names the barber's time zone. Booking dates are limited to 90 days ahead. |
 | `GET /barber-photos/{photoId}/content` | Streams a stored image by opaque database ID; filesystem paths are not accepted. |
+| `GET /discovery/nearby?lat=&lng=&radiusKm=25&minRating=&openNow=false` | Public Google Maps + database hybrid discovery within `radiusKm` (default 25). Merges nearby member barbers that have stored coordinates with live Google Places results; each listing carries `source` (`member`/`google`), name, address, distance in km, rating/review count where known, open-now state, and website/phone/maps links for Google places. Already-claimed place IDs are not re-listed. Without a configured Google key it returns member listings with `googleAvailable=false` and status `unavailable`; provider failures map to `timeout`, `quota_or_authorization`, or `bad_response`. |
 
 `BarberDto` includes `id`, display name, bio, address/location fields,
 `timezoneId`, `averageRating`, `reviewCount`, and photo metadata/URLs.
@@ -54,6 +55,10 @@ profile from the authenticated user and verify ownership for resource IDs.
 | `GET /barber/me/appointments` | Barber's appointment list. |
 | `PATCH /barber/me/appointments/{appointmentId}/status` | `{status}` transitions PENDING→CONFIRMED/REJECTED or CONFIRMED→COMPLETED/NO_SHOW, with server-side ownership and time checks. |
 | `GET /dashboard/barber` | Real pending/today/upcoming appointment data and lifetime completed revenue. |
+| `POST /barber/me/google-claim` | `{googlePlaceId}` requests a Google place claim for the signed-in barber's profile. Rejects invalid IDs, places already claimed (pending or approved), and barbers who already hold an active claim; a previously rejected claim for the same place is reopened as PENDING. Returns 201 + `PlaceClaimDto`. |
+| `GET /barber/me/google-claim` | The barber's most recent Google place claim, or 404 if none exists. |
+| `POST /barber/me/google-claim/{claimId}/approve` | Verifies the place through Google Places and, on success, stores its ID and coordinates on the profile and marks the claim APPROVED. Only a pending, caller-owned claim can be approved; provider failure returns 503. |
+| `POST /barber/me/google-claim/{claimId}/reject` | Marks a pending, caller-owned claim REJECTED with a review timestamp. |
 
 ## Customer actions
 

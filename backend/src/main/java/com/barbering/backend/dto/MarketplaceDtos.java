@@ -24,7 +24,13 @@ public final class MarketplaceDtos {
             @Size(max = 255) String streetAddress,
             @Size(max = 32) String postalCode,
             @Size(max = 120) String country,
-            @Size(max = 80) String timezoneId) {}
+            @Size(max = 80) String timezoneId,
+            Double latitude,
+            Double longitude) {
+        public BarberProfileUpdate(String bio, String city, String region, String streetAddress, String postalCode, String country, String timezoneId) {
+            this(bio, city, region, streetAddress, postalCode, country, timezoneId, null, null);
+        }
+    }
 
     public record OfferingCreate(
             @NotBlank @Size(max = 100) String name,

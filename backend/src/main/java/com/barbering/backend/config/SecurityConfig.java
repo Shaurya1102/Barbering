@@ -41,7 +41,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            @org.springframework.beans.factory.annotation.Value("${server.servlet.session.cookie.secure:false}") boolean cookieSecure,
+            @org.springframework.beans.factory.annotation.Value("${server.servlet.session.cookie.same-site:lax}") String cookieSameSite) throws Exception {
+
+        CookieCsrfTokenRepository csrfRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        if (cookieSecure || "none".equalsIgnoreCase(cookieSameSite)) {
+            csrfRepo.setCookieCustomizer(cookie -> {
+                if (cookieSecure) cookie.secure(true);
+                if ("none".equalsIgnoreCase(cookieSameSite)) cookie.sameSite("None");
+            });
+        }
+
         http
                 .cors(Customizer.withDefaults())
                 // Double-submit-cookie CSRF protection: XSRF-TOKEN cookie is set
@@ -50,7 +62,7 @@ public class SecurityConfig {
                 // request handler compares that header directly against the
                 // cookie token (the default XOR-masking handler only makes sense
                 // for tokens rendered into HTML, which this JSON API never does).
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfRepo)
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 // Defend against session fixation: migrate the context to a new
                 // session id when authentication changes.
@@ -59,6 +71,8 @@ public class SecurityConfig {
                         // CORS preflight requests never carry cookies/CSRF tokens.
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public auth endpoints; everything else requires a session.
+                        // Public read-only discovery (Google Places + member merge).
+                        .requestMatchers(HttpMethod.GET, "/discovery/**").permitAll()
                         .requestMatchers("/auth/signup", "/auth/login", "/auth/csrf", "/barbers/**", "/barber-photos/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex

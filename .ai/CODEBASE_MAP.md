@@ -49,17 +49,22 @@ Entry point: `com/Barbering/BarberingAppApplication.java`.
 - `BarberPhotoController`: owner-only photo upload/delete and public opaque-ID
   image streaming.
 - `AiController`: authenticated recommendation and try-on request contracts.
+- `DiscoveryController`: public Google Maps + database hybrid nearby discovery.
+- `PlaceClaimController`: barber-only Google place claim request/approve/reject and current-claim read.
 
 Business rules are in `services/MarketplaceService`, `AppointmentService`,
-`ReviewService`, `FavouriteService`, and `BarberPhotoService`. `AiProvider` is
-the provider seam; `UnavailableAiProvider` returns 503 until a real provider is
+`ReviewService`, `FavouriteService`, `BarberPhotoService`, `DiscoveryService`,
+and `PlaceClaimService`. `AiProvider` is the provider seam;
+`UnavailableAiProvider` returns 503 until a real provider is configured.
+`GooglePlacesProvider` is the Google Places seam;
+`UnavailableGooglePlacesProvider` returns unavailable until an API key is
 configured. `PhotoStorage` is the storage seam; `LocalPhotoStorage` validates
 JPEG/PNG/WebP content and stores barber images locally.
 
 ### Persistence and security
 
 JPA entities/repositories live in `entities/` and `repositories/`. Flyway
-migrations V1-V4 are under `src/main/resources/db/migration/`. Production
+migrations V1-V5 are under `src/main/resources/db/migration/`. Production
 Hibernate mode is `validate`. `SecurityConfig` retains HTTP-only cookie
 sessions, cookie/header CSRF, role method security, and public read-only
 discovery. `CorsConfig` permits one configured frontend origin.
@@ -77,6 +82,15 @@ timestamps are stored with offsets; schedule rules use each barber's
   must produce one appointment and one 409 conflict.
 - `BackendApplicationTests`: Spring context startup and public search with
   omitted filters.
+- `MarketplaceApiIntegrationTests`: customer profile, barber service
+  create/edit/enable/disable, owner enforcement, edited-service + location
+  search.
+- `DiscoveryServiceTest`: hybrid nearby discovery merging, distance/rating/
+  open-now filtering, claimed-place exclusion, provider unavailable/failure
+  status mapping.
+- `PlaceClaimServiceTest`: claim request validation, duplicate/active-claim
+  rejection, rejected-claim reopen, approve with coordinate persistence,
+  reject lifecycle.
 
 Test datasource uses H2/PostgreSQL compatibility mode. Local PostgreSQL is not
 available by default unless configured through the `BARBERING_DB_*` variables.

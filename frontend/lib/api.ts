@@ -15,6 +15,19 @@ export interface Barber {
   averageRating: number; reviewCount: number; photos: BarberPhoto[];
 }
 export interface BarberSearchPage { items: Barber[]; page: number; size: number; totalItems: number; totalPages: number; }
+export type DiscoverySource = 'MEMBER' | 'GOOGLE';
+export interface DiscoveryListing {
+  source: DiscoverySource; barberId?: number; placeId?: string; name: string; address: string | null;
+  distanceKm: number; rating?: number; reviewCount?: number; openNow?: boolean; websiteUri?: string;
+  phone?: string; mapsUri?: string; directionsUri?: string; lastReviewAt?: string; reviewFreshness?: string;
+}
+export interface DiscoveryResult {
+  listings: DiscoveryListing[]; googleAvailable: boolean;
+  googleStatus: 'ok' | 'unavailable' | 'timeout' | 'quota_or_authorization' | 'bad_response';
+  googleAttribution?: string;
+}
+export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export interface PlaceClaim { id: number; googlePlaceId: string; status: ClaimStatus; requestedAt: string; reviewedAt: string | null; }
 export interface Offering { id: number; serviceId: number; name: string; description: string | null; priceAmount: number; durationMinutes: number; enabled: boolean; }
 export interface WorkingHour { id: number; dayOfWeek: DayOfWeek; startTime: string; endTime: string; enabled: boolean; }
 export interface BreakTime { id: number; dayOfWeek: DayOfWeek; startTime: string; endTime: string; reason: string | null; }
@@ -116,6 +129,29 @@ export function updateUserProfile(displayName: string): Promise<User> {
 
 export function searchBarbers(filters: { query?: string; location?: string; service?: string; page?: number; size?: number }): Promise<BarberSearchPage> {
   return request<BarberSearchPage>(`/barbers${queryString(filters)}`);
+}
+export function searchNearbyBarbers(filters: { lat: number; lng: number; radiusKm?: number; minRating?: number; openNow?: boolean }): Promise<DiscoveryResult> {
+  const values: Record<string, string | number | undefined> = { lat: filters.lat, lng: filters.lng };
+  if (filters.radiusKm !== undefined) values.radiusKm = filters.radiusKm;
+  if (filters.minRating !== undefined) values.minRating = filters.minRating;
+  if (filters.openNow !== undefined) values.openNow = String(filters.openNow);
+  return request<DiscoveryResult>(`/discovery/nearby${queryString(values)}`);
+}
+
+export async function fetchMyGoogleClaim(): Promise<PlaceClaim | null> {
+  const res = await fetch(`${API_URL}/barber/me/google-claim`, { credentials: 'include' });
+  if (res.status === 404) return null;
+  if (!res.ok) throw await parseError(res);
+  return (await res.json()) as PlaceClaim;
+}
+export function requestGoogleClaim(googlePlaceId: string): Promise<PlaceClaim> {
+  return request<PlaceClaim>('/barber/me/google-claim', { method: 'POST', body: JSON.stringify({ googlePlaceId }) });
+}
+export function approveMyGoogleClaim(claimId: number): Promise<PlaceClaim> {
+  return request<PlaceClaim>(`/barber/me/google-claim/${claimId}/approve`, { method: 'POST' });
+}
+export function rejectMyGoogleClaim(claimId: number): Promise<PlaceClaim> {
+  return request<PlaceClaim>(`/barber/me/google-claim/${claimId}/reject`, { method: 'POST' });
 }
 export function fetchBarber(id: number): Promise<Barber> { return request<Barber>(`/barbers/${id}`); }
 export function fetchBarberServices(id: number): Promise<Offering[]> { return request<Offering[]>(`/barbers/${id}/services`); }

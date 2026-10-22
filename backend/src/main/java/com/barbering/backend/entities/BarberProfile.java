@@ -29,6 +29,12 @@ public class BarberProfile {
     private String postalCode;
     @Column(length = 120)
     private String country;
+    @Column(name = "latitude")
+    private Double latitude;
+    @Column(name = "longitude")
+    private Double longitude;
+    @Column(name = "google_place_id", length = 64)
+    private String googlePlaceId;
     @Column(name = "timezone_id", nullable = false, length = 80)
     private String timezoneId = "UTC";
     @Column(name = "created_at", nullable = false, updatable = false)
