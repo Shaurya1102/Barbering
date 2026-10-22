@@ -41,7 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setUser(await fetchMe());
     } catch {
-      setError('We could not verify your account. Check your connection and try again.');
+      // If the backend is sleeping, offline, or network timed out, don't trap the user
+      // in a blocking error or infinite checking state. Fall back to unauthenticated guest state.
+      setUser(null);
     } finally {
       setLoading(false);
     }

@@ -58,15 +58,31 @@ export class ApiError extends Error {
   }
 }
 
+let cachedCsrfToken: string | null = null;
+
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
   const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-async function bootstrapCsrf(force = false): Promise<void> {
-  if (!force && getCookie('XSRF-TOKEN')) return;
-  await fetch(`${API_URL}/auth/csrf`, { credentials: 'include' }).catch(() => undefined);
+async function bootstrapCsrf(force = false): Promise<string | null> {
+  if (!force && (cachedCsrfToken || getCookie('XSRF-TOKEN'))) {
+    return cachedCsrfToken || getCookie('XSRF-TOKEN');
+  }
+  try {
+    const res = await fetch(`${API_URL}/auth/csrf`, { credentials: 'include' });
+    if (res.ok) {
+      const data = (await res.json()) as { token?: string };
+      if (data?.token) {
+        cachedCsrfToken = data.token;
+        return data.token;
+      }
+    }
+  } catch {
+    // If request fails (e.g. backend sleeping), fallback to cookie if present.
+  }
+  return getCookie('XSRF-TOKEN');
 }
 
 async function parseError(res: Response): Promise<ApiError> {
@@ -85,17 +101,23 @@ async function parseError(res: Response): Promise<ApiError> {
 
 async function request<T>(path: string, options: RequestInit = {}, retried = false): Promise<T> {
   const method = (options.method ?? 'GET').toUpperCase();
-  if (method !== 'GET' && method !== 'HEAD') await bootstrapCsrf();
+  const isMutating = method !== 'GET' && method !== 'HEAD';
+  let token = cachedCsrfToken || getCookie('XSRF-TOKEN');
+  if (isMutating && !token) {
+    token = await bootstrapCsrf();
+  }
   const headers: Record<string, string> = { ...(options.headers as Record<string, string> | undefined) };
   const isForm = typeof FormData !== 'undefined' && options.body instanceof FormData;
   if (options.body != null && !isForm) headers['Content-Type'] = 'application/json';
-  const token = getCookie('XSRF-TOKEN');
-  if (token && method !== 'GET' && method !== 'HEAD') headers['X-XSRF-TOKEN'] = token;
+  if (token && isMutating) headers['X-XSRF-TOKEN'] = token;
   const res = await fetch(`${API_URL}${path}`, { ...options, headers, credentials: 'include' });
   if (!res.ok) {
-    if (res.status === 403 && !retried && method !== 'GET' && method !== 'HEAD') {
-      await bootstrapCsrf(true);
-      return request<T>(path, options, true);
+    if (res.status === 403 && !retried && isMutating) {
+      const freshToken = await bootstrapCsrf(true);
+      if (freshToken) {
+        headers['X-XSRF-TOKEN'] = freshToken;
+      }
+      return request<T>(path, { ...options, headers }, true);
     }
     throw await parseError(res);
   }
@@ -116,13 +138,30 @@ export function signup(name: string, email: string, password: string, role: Role
 export function login(email: string, password: string): Promise<User> {
   return request<User>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 }
-export async function fetchMe(): Promise<User | null> {
-  const res = await fetch(`${API_URL}/auth/me`, { credentials: 'include' });
-  if (res.status === 401) return null;
-  if (!res.ok) throw await parseError(res);
-  return (await res.json()) as User;
+export async function fetchMe(timeoutMs = 6000): Promise<User | null> {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  try {
+    const res = await fetch(`${API_URL}/auth/me`, {
+      credentials: 'include',
+      signal: controller?.signal,
+    });
+    if (res.status === 401) return null;
+    if (!res.ok) throw await parseError(res);
+    return (await res.json()) as User;
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      return null;
+    }
+    throw err;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 }
-export function logoutRequest(): Promise<void> { return request<void>('/auth/logout', { method: 'POST' }); }
+export async function logoutRequest(): Promise<void> {
+  cachedCsrfToken = null;
+  return request<void>('/auth/logout', { method: 'POST' });
+}
 export function updateUserProfile(displayName: string): Promise<User> {
   return request<User>('/profile/me', { method: 'PUT', body: JSON.stringify({ displayName }) });
 }

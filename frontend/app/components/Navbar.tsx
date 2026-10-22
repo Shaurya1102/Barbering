@@ -31,10 +31,7 @@ export default function Navbar() {
         <div className="nav-links">
           <Link href="/search" className="nav-link">Find a barber</Link>
           <Link href="/for-barbers" className="nav-link">For barbers</Link>
-          {loading ? <span className="nav-link" aria-live="polite">Checking account…</span> : authError ? <>
-            <span className="nav-link" role="status">Account status unavailable</span>
-            <button type="button" className="nav-pill nav-outline" onClick={() => void retry()}>Retry</button>
-          </> : user ? <>
+          {loading ? <span className="nav-link" aria-live="polite">Checking account…</span> : user ? <>
             {user.role === 'BARBER' ? <>
               <Link href="/barber/dashboard" className="nav-link">Workspace</Link>
               <Link href="/barber/manage" className="nav-link">Manage profile</Link>
@@ -47,6 +44,7 @@ export default function Navbar() {
             <span className="nav-link max-w-32 truncate" title={user.displayName}>{user.displayName}</span>
             <button type="button" className="nav-pill nav-outline" onClick={logOut}>Log out</button>
           </> : <>
+            {authError && <button type="button" className="nav-link text-xs text-amber-700" onClick={() => void retry()} title="Retry connection">Reconnecting…</button>}
             <Link href="/auth/login" className="nav-link">Log in</Link>
             <Link href="/auth/signup" className="nav-pill nav-pill-dark">Create account</Link>
           </>}
@@ -59,10 +57,7 @@ export default function Navbar() {
       {mobileOpen && <nav id="mobile-navigation" aria-label="Mobile navigation" className="mobile-nav">
         <Link href="/search" onClick={closeMenu}>Find a barber</Link>
         <Link href="/for-barbers" onClick={closeMenu}>For barbers</Link>
-        {loading ? <p className="px-3 py-2 text-sm text-neutral-500">Checking account…</p> : authError ? <>
-          <p role="status" className="px-3 py-2 text-sm text-amber-900">Account status unavailable.</p>
-          <button type="button" onClick={() => void retry()}>Try again</button>
-        </> : user ? <>
+        {loading ? <p className="px-3 py-2 text-sm text-neutral-500">Checking account…</p> : user ? <>
           {user.role === 'BARBER' ? <>
             <Link href="/barber/dashboard" onClick={closeMenu}>Workspace</Link>
             <Link href="/barber/manage" onClick={closeMenu}>Manage profile</Link>
@@ -75,6 +70,7 @@ export default function Navbar() {
           <p className="px-3 py-2 text-xs text-neutral-500">Signed in as {user.displayName}</p>
           <button type="button" onClick={logOut}>Log out</button>
         </> : <>
+          {authError && <button type="button" className="px-3 py-1 text-left text-xs text-amber-700" onClick={() => void retry()}>Reconnecting…</button>}
           <Link href="/auth/login" onClick={closeMenu}>Log in</Link>
           <Link href="/auth/signup" onClick={closeMenu}>Create account</Link>
         </>}
