@@ -26,20 +26,39 @@ public interface BarberProfileRepository extends JpaRepository<BarberProfile, Lo
     @Query("select p from BarberProfile p where p.userId = :userId")
     Optional<BarberProfile> lockByUserId(@Param("userId") Long userId);
 
-    @Query("""
-            select distinct p from BarberProfile p, User u
-            where u.id = p.userId
-              and (:query = '' or lower(u.displayName) like concat('%', :query, '%') or lower(coalesce(p.bio, '')) like concat('%', :query, '%')
-                  or exists (
-                      select oq.id from BarberServiceOffering oq, ServiceCatalogItem sq
-                      where oq.barberProfileId = p.id and oq.serviceId = sq.id and oq.enabled = true
-                        and lower(coalesce(oq.nameOverride, sq.name)) like concat('%', :query, '%')))
-              and (:location = '' or lower(concat(coalesce(p.streetAddress, ''), ' ', coalesce(p.city, ''), ' ', coalesce(p.region, ''), ' ', coalesce(p.postalCode, ''), ' ', coalesce(p.country, ''))) like concat('%', :location, '%'))
+    @Query(value = """
+            select distinct p.* from barber_profiles p
+            join users u on u.id = p.user_id
+            where (:query = '' or lower(u.display_name) like concat('%', :query, '%') or lower(coalesce(p.bio, '')) like concat('%', :query, '%')
+                or exists (
+                    select 1 from barber_services oq
+                    join services sq on oq.service_id = sq.id
+                    where oq.barber_profile_id = p.id and oq.enabled = true
+                      and lower(coalesce(oq.name_override, sq.name)) like concat('%', :query, '%')))
+              and (:location = '' or lower(concat(coalesce(p.street_address, ''), ' ', coalesce(p.city, ''), ' ', coalesce(p.region, ''), ' ', coalesce(p.postal_code, ''), ' ', coalesce(p.country, ''))) like concat('%', :location, '%'))
               and (:service = '' or exists (
-                  select o.id from BarberServiceOffering o, ServiceCatalogItem s
-                  where o.barberProfileId = p.id and o.serviceId = s.id and o.enabled = true
-                    and lower(coalesce(o.nameOverride, s.name)) like concat('%', :service, '%')))
-            """)
+                  select 1 from barber_services o
+                  join services s on o.service_id = s.id
+                  where o.barber_profile_id = p.id and o.enabled = true
+                    and lower(coalesce(o.name_override, s.name)) like concat('%', :service, '%')))
+            """,
+            countQuery = """
+            select count(distinct p.id) from barber_profiles p
+            join users u on u.id = p.user_id
+            where (:query = '' or lower(u.display_name) like concat('%', :query, '%') or lower(coalesce(p.bio, '')) like concat('%', :query, '%')
+                or exists (
+                    select 1 from barber_services oq
+                    join services sq on oq.service_id = sq.id
+                    where oq.barber_profile_id = p.id and oq.enabled = true
+                      and lower(coalesce(oq.name_override, sq.name)) like concat('%', :query, '%')))
+              and (:location = '' or lower(concat(coalesce(p.street_address, ''), ' ', coalesce(p.city, ''), ' ', coalesce(p.region, ''), ' ', coalesce(p.postal_code, ''), ' ', coalesce(p.country, ''))) like concat('%', :location, '%'))
+              and (:service = '' or exists (
+                  select 1 from barber_services o
+                  join services s on o.service_id = s.id
+                  where o.barber_profile_id = p.id and o.enabled = true
+                    and lower(coalesce(o.name_override, s.name)) like concat('%', :service, '%')))
+            """,
+            nativeQuery = true)
     Page<BarberProfile> search(@Param("query") String query, @Param("location") String location,
                                @Param("service") String service, Pageable pageable);
 }
